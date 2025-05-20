@@ -1,7 +1,7 @@
 import './style.css'
 
 document.getElementById("task1Btn").addEventListener("click", () => {
-  window.location.href = "/src/task1.html";
+  window.location.href = "task1.html";
 });
 
 document.getElementById("task2Btn").addEventListener("click", () => {
