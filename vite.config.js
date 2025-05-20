@@ -1,5 +1,6 @@
 // vite.config.js
-import basicSsl from '@vitejs/plugin-basic-ssl'
+import basicSsl from '@vitejs/plugin-basic-ssl';
+import { resolve } from "path";
 
 export default {
   plugins: [
@@ -12,4 +13,12 @@ export default {
       certDir: '/Users/.../.devServer/cert',
     }),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        menu: resolve(__dirname, "index.html"),
+        task1: resolve(__dirname, "task1.html"),
+      },
+    },
+  },
 }
