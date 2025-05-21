@@ -5,7 +5,7 @@ document.getElementById("task1Btn").addEventListener("click", () => {
 });
 
 document.getElementById("task2Btn").addEventListener("click", () => {
-  window.location.href = "src/task2.html";
+  window.location.href = "task2.html";
 });
 
 document.getElementById("task3Btn").addEventListener("click", () => {

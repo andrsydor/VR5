@@ -18,6 +18,7 @@ export default {
       input: {
         menu: resolve(__dirname, "index.html"),
         task1: resolve(__dirname, "task1.html"),
+        task2: resolve(__dirname, "task2.html"),
       },
     },
   },
