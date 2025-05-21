@@ -328,8 +328,8 @@ function animateObjects(timestamp) {
   }
 
   if (specialEffectActive) {
-    specialEffectTimer += 0.01 * speed * specialSpeed;
-    particles.position.z += 0.01 * speed * specialSpeed;
+    specialEffectTimer += 0.1 * speed * specialSpeed;
+    particles.position.z += 0.1 * speed * specialSpeed;
     particles.material.opacity = Math.max(0, 1 - specialEffectTimer / 5);
     if (specialEffectTimer >= 5) {
       specialEffectActive = false;
