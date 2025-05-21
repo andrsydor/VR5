@@ -2,26 +2,41 @@ import * as THREE from "three";
 import { ARButton } from "three/addons/webxr/ARButton.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
+class CustomSinCurve extends THREE.Curve {
+
+	constructor( scale = 1 ) {
+		super();
+		this.scale = scale;
+	}
+
+	getPoint( t, optionalTarget = new THREE.Vector3() ) {
+
+		const tx = t * 3 - 1.5;
+		const ty = Math.sin( 2 * Math.PI * t );
+		const tz = 0;
+
+		return optionalTarget.set( tx, ty, tz ).multiplyScalar( this.scale );
+	}
+}
+
 let camera, scene, renderer;
-let dodecahedronMesh, tetrahedronMesh, torusMesh;
+let dodecahedronMesh, extrudeMesh, tubeMesh;
 let controls;
-let particles; // Special Effect
+let particles;
 let hue = 0;
 
-// Стани анімацій
 let rotationEnabled = true;
 let pulseMoveEnabled = true;
 let colorEmitEnabled = true;
 let speedMode = "normal";
 let texturesEnabled = true;
-let rotationDirection = 1; // 1: Вперед; -1: Назад
+let rotationDirection = 1;
 let specialEffectActive = false;
 let specialEffectTimer = 0;
 
-// Матеріали з текстурами та без текстур
 let dodecahedronMaterial, dodecahedronMaterialNoTexture;
-let tetrahedronMaterial, tetrahedronMaterialNoTexture;
-let torusMaterial, torusMaterialNoTexture;
+let tubeMaterial, tubeMaterialNoTexture;
+let extrudeMaterial, extrudeMaterialNoTexture;
 
 init();
 animate();
@@ -30,21 +45,17 @@ function init() {
   const container = document.createElement("div");
   document.body.appendChild(container);
 
-  // Сцена
   scene = new THREE.Scene();
 
-  // Камера
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
 
-  // Рендеринг
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-  renderer.xr.enabled = true; // Життєво важливий рядок коду для вашого застосунку!
+  renderer.xr.enabled = true;
   container.appendChild(renderer.domElement);
 
-  // Світло
   const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
   directionalLight.position.set(3, 3, 3);
   scene.add(directionalLight);
@@ -56,30 +67,28 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
   scene.add(ambientLight);
 
-  // Завантаження текстур
   const textureLoader = new THREE.TextureLoader();
+  const colorfulMetalTexture = textureLoader.load(
+    "https://images.unsplash.com/photo-1659776026027-6b0f66d92675?q=80&w=1527&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+  );
   const glassTexture = textureLoader.load(
     "https://as1.ftcdn.net/v2/jpg/01/61/23/82/1000_F_161238202_GbkRIC1lSjG7lZCLLPfQ7wAaEQyw9UsG.jpg"
   );
-  const metalTexture = textureLoader.load(
-    "https://images.unsplash.com/photo-1501166222995-ff31c7e93cef?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWV0YWwlMjB0ZXh0dXJlc3xlbnwwfHwwfHx8MA%3D%3D"
-  );
-  const lavaTexture = textureLoader.load(
-    "https://t4.ftcdn.net/jpg/01/83/14/47/360_F_183144766_dbGaN37u6a4VCliXQ6wcarerpYmuLAto.jpg"
+  const futuristicTexture = textureLoader.load(
+    "https://images.unsplash.com/photo-1617864323755-662e612eb00a?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
   );
 
-  // 1. Додекаедр (Dodecahedron)
   const dodecahedronGeometry = new THREE.DodecahedronGeometry(0.6);
   dodecahedronMaterial = new THREE.MeshPhysicalMaterial({
-    map: glassTexture,
-    transparent: true,
-    opacity: 0.7,
+    map: colorfulMetalTexture,
+    transparent: false,
+    opacity: 1.0,
     roughness: 0.5,
-    metalness: 0.3,
+    metalness: 0.9,
     transmission: 0.6,
   });
   dodecahedronMaterialNoTexture = new THREE.MeshPhysicalMaterial({
-    color: 0x00ff00,
+    color: 0x508194,
     transparent: true,
     opacity: 0.7,
     roughness: 0.5,
@@ -87,58 +96,49 @@ function init() {
     transmission: 0.6,
   });
   dodecahedronMesh = new THREE.Mesh(dodecahedronGeometry, dodecahedronMaterial);
-  dodecahedronMesh.position.set(-1.5, 0, -5);
+  dodecahedronMesh.position.set(-2.0, 0, -5);
   scene.add(dodecahedronMesh);
 
-  // 2. Torus Knot
-  const torusGeometry = new THREE.TorusKnotGeometry(0.25, 0.15, 50, 16);
-  torusMaterial = new THREE.MeshStandardMaterial({
-    map: metalTexture,
-    metalness: 0.8,
-    roughness: 0.2,
+  const extrudeGeometry = new THREE.ExtrudeGeometry();
+  extrudeMaterial = new THREE.MeshStandardMaterial({
+    map: glassTexture,
+    opacity: 0.5,
+    metalness: 0.9,
+    roughness: 0.2
   })
-  torusMaterialNoTexture = new THREE.MeshStandardMaterial({
-    color: 0xff4500, 
-    emissive: 0xff4500, 
-    emissiveIntensity: 3, 
-    metalness: 0.5,
-    roughness: 0.2,
-  });
-  torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-  torusMesh.position.set(0, 0, -5);
-  scene.add(torusMesh);
+  extrudeMaterialNoTexture = new THREE.MeshStandardMaterial({
+    color: 0x370852,
+    metalness: 0.8
+  })
+  extrudeMesh = new THREE.Mesh(extrudeGeometry, extrudeMaterial);
+  extrudeMesh.position.set(0, 0, -5);
+  scene.add(extrudeMesh);
 
-  // 3. Тетраедр (Tetrahedron)
-  const tetrahedronGeometry = new THREE.TetrahedronGeometry(0.6);
-  tetrahedronMaterial = new THREE.MeshStandardMaterial({
-    map: lavaTexture,
-    emissive: 0xff0000,
+  const path = new CustomSinCurve(0.5);
+  const tubeGeometry = new THREE.TubeGeometry( path, 20, 0.2, 8, false );
+  tubeMaterial = new THREE.MeshStandardMaterial({
+    map: futuristicTexture,
+    metalness: 0.9,
+    roughness: 0.4,
+  });
+  tubeMaterialNoTexture = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0x000000,
     emissiveIntensity: 1.5,
     metalness: 0.5,
     roughness: 0.4,
   });
-  tetrahedronMaterialNoTexture = new THREE.MeshStandardMaterial({
-    color: 0xff0000,
-    emissive: 0xff0000,
-    emissiveIntensity: 1.5,
-    metalness: 0.5,
-    roughness: 0.4,
-  });
-  tetrahedronMesh = new THREE.Mesh(tetrahedronGeometry, tetrahedronMaterial);
-  tetrahedronMesh.position.set(1.5, 0, -5);
-  scene.add(tetrahedronMesh);
+  tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+  tubeMesh.position.set(2.0, 0, -5);
+  scene.add(tubeMesh);
 
-  // Special Effect
   createParticles();
 
-  // Позиція камери
   camera.position.z = 3;
 
-  // Контролери для 360 огляду на вебсторінці
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
-  // Налаштування AR-режиму
   const button = ARButton.createButton(renderer, {
     onSessionStarted: () => {
       renderer.domElement.style.background = "transparent";
@@ -151,7 +151,6 @@ function init() {
   document.body.appendChild(button);
   renderer.domElement.style.display = "block";
 
-  // Додаємо Listener для кнопок
   document
     .getElementById("toggleRotationBtn")
     .addEventListener("click", toggleRotation);
@@ -177,10 +176,9 @@ function init() {
   window.addEventListener("resize", onWindowResize, false);
 }
 
-// Special Effect
 function createParticles() {
   const particleGeometry = new THREE.BufferGeometry();
-  const particleCount = 300;
+  const particleCount = 150;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
 
@@ -245,17 +243,13 @@ function toggleTextures() {
     ? "Disable Textures"
     : "Enable Textures";
 
-  dodecahedronMesh.material = texturesEnabled
-    ? dodecahedronMaterial
-    : dodecahedronMaterialNoTexture;
-  torusMesh.material = texturesEnabled ? torusMaterial : torusMaterialNoTexture;
-  tetrahedronMesh.material = texturesEnabled
-    ? tetrahedronMaterial
-    : tetrahedronMaterialNoTexture;
+  dodecahedronMesh.material = texturesEnabled ? dodecahedronMaterial : dodecahedronMaterialNoTexture;
+  extrudeMesh.material = texturesEnabled ? extrudeMaterial : extrudeMaterialNoTexture;
+  tubeMesh.material = texturesEnabled ? tubeMaterial : tubeMaterialNoTexture;
 
   dodecahedronMesh.material.needsUpdate = true;
-  torusMesh.material.needsUpdate = true;
-  tetrahedronMesh.material.needsUpdate = true;
+  extrudeMesh.material.needsUpdate = true;
+  tubeMesh.material.needsUpdate = true;
 }
 
 function toggleDirection() {
@@ -268,6 +262,7 @@ function triggerSpecialEffect() {
   specialEffectActive = true;
   specialEffectTimer = 0;
   particles.material.opacity = 1;
+  particles.position.z = 0;
 }
 
 function onWindowResize() {
@@ -290,10 +285,9 @@ function animateObjects(timestamp) {
   const speed = speedMode === "normal" ? 1 : 2;
   const specialSpeed = specialEffectActive ? 3 : 1;
 
-  // Анімація додекаедра
   if (rotationEnabled) {
-    dodecahedronMesh.rotation.y -=
-      0.01 * speed * rotationDirection * specialSpeed;
+    dodecahedronMesh.rotation.y -= 0.01 * speed * rotationDirection * specialSpeed;
+    dodecahedronMesh.rotation.x -= 0.01 * speed * rotationDirection * specialSpeed;
   }
   if (pulseMoveEnabled) {
     const scale = 1 + 0.2 * Math.sin(timestamp * 0.002 * speed * specialSpeed);
@@ -304,47 +298,43 @@ function animateObjects(timestamp) {
       0.5 + 0.2 * Math.sin(timestamp * 0.003 * speed * specialSpeed);
   }
 
-  // Анімація торуса
   if (rotationEnabled) {
-    torusMesh.rotation.x -= 0.01 * speed * rotationDirection * specialSpeed;
+    extrudeMesh.rotation.x -= 0.01 * speed * rotationDirection * specialSpeed;
   }
   if (pulseMoveEnabled) {
     const innerRadius =
       0.4 + 0.1 * Math.sin(timestamp * 0.002 * speed * specialSpeed);
     const outerRadius =
       0.6 + 0.1 * Math.sin(timestamp * 0.002 * speed * specialSpeed);
-    torusMesh.geometry = new THREE.TorusKnotGeometry(0.25, 0.15, 50, 16);
+    extrudeMesh.geometry = new THREE.ExtrudeGeometry();
   }
   if (colorEmitEnabled) {
     hue += 0.005 * speed * specialSpeed;
     if (hue > 1) hue = 0;
-    torusMesh.material.color.setHSL(hue, 1, 0.5);
+    extrudeMesh.material.color.setHSL(hue, 1, 0.5);
   }
 
-  // Анімація тетраедра
   if (rotationEnabled) {
-    tetrahedronMesh.rotation.x -=
-      0.01 * speed * rotationDirection * specialSpeed;
-    tetrahedronMesh.rotation.y -=
-      0.01 * speed * rotationDirection * specialSpeed;
+    tubeMesh.rotation.y -= 0.01 * speed * rotationDirection * specialSpeed;
   }
   if (pulseMoveEnabled) {
     const jump =
       Math.abs(Math.sin(timestamp * 0.005 * speed * specialSpeed)) * 0.5;
-    tetrahedronMesh.position.y = jump;
+    tubeMesh.position.y = jump;
   }
   if (colorEmitEnabled) {
-    tetrahedronMesh.material.emissiveIntensity =
+    tubeMesh.material.emissiveIntensity =
       1.5 + Math.sin(timestamp * 0.003 * speed * specialSpeed);
   }
 
-  // Анімація частинок
   if (specialEffectActive) {
-    specialEffectTimer += 0.1 * speed * specialSpeed;
+    specialEffectTimer += 0.01 * speed * specialSpeed;
+    particles.position.z += 0.01 * speed * specialSpeed;
     particles.material.opacity = Math.max(0, 1 - specialEffectTimer / 5);
     if (specialEffectTimer >= 5) {
       specialEffectActive = false;
       particles.material.opacity = 0;
+      particles.position.z = 0;
     }
   }
 }
