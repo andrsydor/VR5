@@ -66,16 +66,16 @@ function onSelect() {
 
         const loader = new GLTFLoader();
 
-        if (model) {
-            scene.remove(model);
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    child.geometry.dispose();
-                    child.material.dispose();
-                }
-            });
-            model = null;
-        }
+        // if (model) {
+        //     scene.remove(model);
+        //     model.traverse((child) => {
+        //         if (child.isMesh) {
+        //             child.geometry.dispose();
+        //             child.material.dispose();
+        //         }
+        //     });
+        //     model = null;
+        // }
 
         loader.load(
             modelUrl,
