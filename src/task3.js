@@ -62,7 +62,7 @@ function addReticleToScene() {
 
 function onSelect() {        
     if (reticle.visible) {
-        const geometry = new THREE.IcosahedronGeometry(0.5);
+        const geometry = new THREE.IcosahedronGeometry(0.05);
         const material = new THREE.MeshStandardMaterial({
             color: 0xffffff * Math.random(),
             metalness: Math.random(), 
