@@ -81,8 +81,9 @@ function onSelect() {
             modelUrl,
                 function (gltf) {
                     model = gltf.scene;
-
-                    model.position.set(reticle.position.x, reticle.position.y, reticle.position.z);
+                    
+                    model.position.setFromMatrixPosition(reticle.matrix);
+                    // model.position.set(reticle.position.x, reticle.position.y, reticle.position.z);
                 
                     model.rotation.copy(reticle.rotation);
 
