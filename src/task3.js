@@ -15,29 +15,26 @@ function init() {
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    // Сцена
     scene = new THREE.Scene();
-    // Камера
+
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-    // Рендеринг
+
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     container.appendChild(renderer.domElement);
-    // Світло
+
     var light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
     light.position.set(0.5, 1, 0.25);
     scene.add(light);
-    // Контролер додавання об'єкта на сцену
+
     controller = renderer.xr.getController(0);
     controller.addEventListener('select', onSelect);
     scene.add(controller);
 
-    // Додаємо нашу мітку поверхні на сцену
     addReticleToScene();
 
-    // Тепер для AR-режиму необхідно застосувати режим hit-test
     const button = ARButton.createButton(renderer, {
         requiredFeatures: ["hit-test"]
     });
@@ -56,24 +53,18 @@ function addReticleToScene() {
 
     reticle = new THREE.Mesh(geometry, material);
 
-    // Є прекрасна можливість автоматично визначати позицію і обертання мітки поверхні
-    // через параметр 'matrixAutoUpdate', але це не весело, тому спробуємо це зробити самотужки
-    // у функції render()
     reticle.matrixAutoUpdate = false;
     reticle.visible = false;
     scene.add(reticle);
 
-    // Додає систему координат, щоб ви краще розуміли, де буде розміщений об'єкт
     reticle.add(new THREE.AxesHelper(1));
 }
 
 function onSelect() {        
     if (reticle.visible) {
-        // Ваш об'єкт буде з'являтись на тому місці, де натиснете пальчиком по поверхні
-        // Замініть реалізацію об'єкта на той, що у вашому індивідуальному завданні
-        const geometry = new THREE.TorusGeometry(0.05, 0.02, 16, 32);
+        const geometry = new THREE.IcosahedronGeometry(0.5);
         const material = new THREE.MeshStandardMaterial({
-            color: 0xffffff * Math.random(), // Рандомний колір
+            color: 0xffffff * Math.random(),
             metalness: Math.random(), 
             roughness: Math.random() * 0.5, 
         });
@@ -131,14 +122,11 @@ async function initializeHitTestSource() {
 
 function render(timestamp, frame) {
     if (frame) {
-        // 1. Створюємо hitTestSource для усіх наших кадрів
         if (!hitTestSourceInitialized) {
             initializeHitTestSource();
         }
 
-        // 2. Отримуємо результати hitResults
         if (hitTestSourceInitialized) {
-            // проте результати йдуть окремо для кожного кадру
             const hitTestResults = frame.getHitTestResults(hitTestSource);
 
             // Ми можемо отримати багато поверхонь у результатах, але та поверхня, яка буде найближчою 
