@@ -19,6 +19,8 @@ export default {
         menu: resolve(__dirname, "index.html"),
         task1: resolve(__dirname, "task1.html"),
         task2: resolve(__dirname, "task2.html"),
+        task3: resolve(__dirname, "task3.html"),
+        task4: resolve(__dirname, "task4.html"),
       },
     },
   },

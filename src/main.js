@@ -9,9 +9,9 @@ document.getElementById("task2Btn").addEventListener("click", () => {
 });
 
 document.getElementById("task3Btn").addEventListener("click", () => {
-  window.location.href = "src/task3.html";
+  window.location.href = "task3.html";
 });
 
 document.getElementById("task4Btn").addEventListener("click", () => {
-  window.location.href = "src/task4.html";
+  window.location.href = "task4.html";
 });
