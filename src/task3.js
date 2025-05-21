@@ -7,6 +7,40 @@ let container;
 let camera, scene, renderer;
 let reticle;
 let controller;
+let meshes = [];
+let rotationEnabled = true;
+let scaleAnimationEnabled = true;
+let currentMaterialIndex = 0;
+let currentColor = 0x00ff00;
+let currentScale = 1.0;
+
+
+const materials = [
+  new THREE.MeshPhysicalMaterial({
+    color: 0x00ff00,
+    metalness: 0.5,
+    roughness: 0.3,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.1,
+    reflectivity: 0.8,
+  }),
+  new THREE.MeshPhysicalMaterial({
+    color: 0x00ff00,
+    transparent: true,
+    opacity: 0.5,
+    metalness: 0.1,
+    roughness: 0.1,
+    transmission: 0.9,
+    thickness: 0.5,
+  }),
+  new THREE.MeshStandardMaterial({
+    color: 0x00ff00,
+    emissive: 0x00ff00,
+    emissiveIntensity: 2,
+    metalness: 0.2,
+    roughness: 0.5,
+  }),
+];
 
 init();
 animate();
@@ -25,9 +59,12 @@ function init() {
     renderer.xr.enabled = true;
     container.appendChild(renderer.domElement);
 
-    var light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-    light.position.set(0.5, 1, 0.25);
-    scene.add(light);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
 
     controller = renderer.xr.getController(0);
     controller.addEventListener('select', onSelect);
@@ -36,10 +73,25 @@ function init() {
     addReticleToScene();
 
     const button = ARButton.createButton(renderer, {
-        requiredFeatures: ["hit-test"]
+        requiredFeatures: ["hit-test"],
+        onSessionStarted: () => {
+            renderer.domElement.style.background = "transparent";
+            document.getElementById("controls").style.display = "flex";
+        },
+        onSessionEnded: () => {
+            document.getElementById("controls").style.display = "flex";
+        },
     });
     document.body.appendChild(button);
     renderer.domElement.style.display = "none";
+
+    document.getElementById("changeColorBtn").addEventListener("click", changeConeColor);
+    document.getElementById("toggleRotationBtn").addEventListener("click", toggleRotation);
+    document.getElementById("changeSizeBtn").addEventListener("click", changeConeSize);
+    document.getElementById("toggleScaleAnimationBtn").addEventListener("click", toggleScaleAnimation);
+    document.getElementById("changeMaterialBtn").addEventListener("click", changeMaterial);
+
+    updateColorIndicator(0x000000);
 
     window.addEventListener("resize", onWindowResize, false);
 }
@@ -63,18 +115,88 @@ function addReticleToScene() {
 function onSelect() {        
     if (reticle.visible) {
         const geometry = new THREE.IcosahedronGeometry(0.05);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xffffff * Math.random(),
-            metalness: Math.random(), 
-            roughness: Math.random() * 0.5, 
-        });
+        const material = materials[currentMaterialIndex].clone();
+        material.color.setHex(currentColor);
         const mesh = new THREE.Mesh(geometry, material);
         
         mesh.position.setFromMatrixPosition(reticle.matrix);
         mesh.quaternion.setFromRotationMatrix(reticle.matrix);
-    
+
+        mesh.scale.set(currentScale, currentScale, currentScale);
+
+        let scaleUp = true;
+        mesh.userData.animateScale = () => {
+        if (scaleUp) {
+            mesh.scale.multiplyScalar(1.05);
+            if (mesh.scale.x >= currentScale) scaleUp = false;
+        } else {
+            mesh.scale.multiplyScalar(0.95);
+            if (mesh.scale.x <= currentScale * 0.5) scaleUp = true;
+        }
+        };
+
+        mesh.userData.rotationSpeed = 0.02;
+
+        meshes.push(mesh);
         scene.add(mesh); 
+
+        const placeSound = document.getElementById("placeSound");
+        placeSound.currentTime = 0;
+        placeSound.play();
     }
+}
+
+function updateColorIndicator(color) {
+  const colorIndicator = document.getElementById("colorIndicator");
+  const hexColor = `#${(color & 0xffffff).toString(16).padStart(6, "0")}`;
+  colorIndicator.style.backgroundColor = hexColor;
+}
+
+function changeConeColor() {
+  currentColor = Math.random() * 0xffffff;
+  meshes.forEach((mesh) => {
+    mesh.material.color.setHex(currentColor);
+  });
+  updateColorIndicator(currentColor);
+}
+
+function toggleRotation() {
+  rotationEnabled = !rotationEnabled;
+  document.getElementById("toggleRotationBtn").textContent = rotationEnabled
+    ? "Disable Rotation"
+    : "Enable Rotation";
+}
+
+function changeConeSize() {
+  currentScale = Math.random() * 0.5 + 0.5;
+  meshes.forEach((mesh) => {
+    mesh.scale.set(currentScale, currentScale, currentScale);
+  });
+  document.getElementById(
+    "scaleIndicator"
+  ).textContent = `Current Scale: ${currentScale.toFixed(2)}`;
+}
+
+function toggleScaleAnimation() {
+  scaleAnimationEnabled = !scaleAnimationEnabled;
+  document.getElementById("toggleScaleAnimationBtn").textContent =
+    scaleAnimationEnabled
+      ? "Disable Scale Animation"
+      : "Enable Scale Animation";
+}
+
+function changeMaterial() {
+  currentMaterialIndex = (currentMaterialIndex + 1) % materials.length;
+  const newMaterial = materials[currentMaterialIndex].clone();
+  meshes.forEach((mesh) => {
+    const currentColor = mesh.material.color.getHex();
+    mesh.material.dispose();
+    mesh.material = newMaterial;
+    mesh.material.color.setHex(currentColor);
+  });
+  document.getElementById("changeMaterialBtn").textContent = `Material: ${
+    ["Metallic", "Glass", "Emissive"][currentMaterialIndex]
+  }`;
 }
 
 function onWindowResize() {
@@ -144,6 +266,15 @@ function render(timestamp, frame) {
                 reticle.visible = false;
             }
         }
+
+        meshes.forEach((mesh) => {
+            if (scaleAnimationEnabled && mesh.userData.animateScale) {
+                mesh.userData.animateScale();
+            }
+            if (rotationEnabled) {
+                mesh.rotation.y += mesh.userData.rotationSpeed;
+            }
+        });
 
         renderer.render(scene, camera);
     }
