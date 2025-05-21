@@ -147,9 +147,9 @@ function onSelect() {
 }
 
 function updateColorIndicator(color) {
-  const colorIndicator = document.getElementById("colorIndicator");
   const hexColor = `#${(color & 0xffffff).toString(16).padStart(6, "0")}`;
-  colorIndicator.style.backgroundColor = hexColor;
+  const colorButton = document.getElementById("changeColorBtn")
+  colorButton.style.backgroundColor = hexColor;
 }
 
 function changeConeColor() {
