@@ -91,7 +91,7 @@ function init() {
     document.getElementById("toggleScaleAnimationBtn").addEventListener("click", toggleScaleAnimation);
     document.getElementById("changeMaterialBtn").addEventListener("click", changeMaterial);
 
-    updateColorIndicator(0x000000);
+    updateColorIndicator(0xff0000);
 
     window.addEventListener("resize", onWindowResize, false);
 }
@@ -172,9 +172,7 @@ function changeConeSize() {
   meshes.forEach((mesh) => {
     mesh.scale.set(currentScale, currentScale, currentScale);
   });
-  document.getElementById(
-    "scaleIndicator"
-  ).textContent = `Current Scale: ${currentScale.toFixed(2)}`;
+  document.getElementById("scaleIndicator").textContent = `Current Scale: ${currentScale.toFixed(2)}`;
 }
 
 function toggleScaleAnimation() {
