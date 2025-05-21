@@ -57,7 +57,7 @@ function addReticleToScene() {
     reticle.visible = false;
     scene.add(reticle);
 
-    // reticle.add(new THREE.AxesHelper(1));
+    reticle.add(new THREE.AxesHelper(1));
 }
 
 function onSelect() {
@@ -96,20 +96,6 @@ function onSelect() {
                     
                     const ambientLight = new THREE.AmbientLight(0xffffff, 2); 
                     scene.add(ambientLight);
-
-                    // const goldMaterial = new THREE.MeshStandardMaterial({
-                    //     color: 0xffd700, // Золотий колір
-                    //     metalness: 1,
-                    //     roughness: 0.1,
-                    // });
-            
-                    // // Змінюємо модель (якщо потрібно)
-                    // model.traverse((child) => {
-                    //     if (child.isMesh) {
-                    //         child.material = goldMaterial;
-                    //         child.material.needsUpdate = true;
-                    //     }
-                    // });
 
                     console.log("Model added to scene at", model.position);
                 },
