@@ -151,34 +151,34 @@ function onSelect() {
                     model.userData.basePosition = model.position.clone();
                     model.userData.rotationSpeed = 0.02;
 
-                    model.traverse((child) => {
-                        if (child.isMesh) {
-                            console.log("Mesh found:", child.name, "Material:", child.material);
-                            originalMaterials.set(child, child.material);
-                            child.castShadow = true; // Модель відкидає тіні
-                            child.receiveShadow = true; // Модель приймає тіні
-                            if (child.material) {
-                            child.material.side = THREE.DoubleSide;
-                            child.material.needsUpdate = true;
-                            // Налаштування для чіткості
-                            child.material.metalness = child.material.metalness || 0.5; // Збільшуємо для відблисків
-                            child.material.roughness = child.material.roughness || 0.3; // Зменшуємо для чіткості
-                            if (child.material.map) {
-                                child.material.map.encoding = THREE.sRGBEncoding;
-                                child.material.map.flipY = false;
-                            }
-                            if (child.material.normalMap) {
-                                child.material.normalMap.encoding = THREE.LinearEncoding;
-                            }
-                            if (child.material.roughnessMap) {
-                                child.material.roughnessMap.encoding = THREE.LinearEncoding;
-                            }
-                            if (child.material.metalnessMap) {
-                                child.material.metalnessMap.encoding = THREE.LinearEncoding;
-                            }
-                            }
-                        }
-                    });
+                    // model.traverse((child) => {
+                    //     if (child.isMesh) {
+                    //         console.log("Mesh found:", child.name, "Material:", child.material);
+                    //         originalMaterials.set(child, child.material);
+                    //         child.castShadow = true; // Модель відкидає тіні
+                    //         child.receiveShadow = true; // Модель приймає тіні
+                    //         if (child.material) {
+                    //         child.material.side = THREE.DoubleSide;
+                    //         child.material.needsUpdate = true;
+                    //         // Налаштування для чіткості
+                    //         child.material.metalness = child.material.metalness || 0.5; // Збільшуємо для відблисків
+                    //         child.material.roughness = child.material.roughness || 0.3; // Зменшуємо для чіткості
+                    //         if (child.material.map) {
+                    //             child.material.map.encoding = THREE.sRGBEncoding;
+                    //             child.material.map.flipY = false;
+                    //         }
+                    //         if (child.material.normalMap) {
+                    //             child.material.normalMap.encoding = THREE.LinearEncoding;
+                    //         }
+                    //         if (child.material.roughnessMap) {
+                    //             child.material.roughnessMap.encoding = THREE.LinearEncoding;
+                    //         }
+                    //         if (child.material.metalnessMap) {
+                    //             child.material.metalnessMap.encoding = THREE.LinearEncoding;
+                    //         }
+                    //         }
+                    //     }
+                    // });
 
                     if (materials[currentMaterial]) {
                         model.traverse((child) => {
